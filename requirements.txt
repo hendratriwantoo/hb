@@ -1,3 +1,2 @@
 requests
 urllib3
-isi *build command* dengan `pip install -r requirements.txt` dan *start command* dengan `python radar_hongbao.py`. silakan dicoba, semoga berjalan lancar tanpa masalah *timeout*.
