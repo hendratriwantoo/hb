@@ -84,7 +84,7 @@ class RadarHongbao:
     def test_koneksi(self):
         self.tambah_log("mengirim pesan uji coba ke telegram...")
         msg = (
-            f"<b>Test Radar Hongbao</b>\n\n"
+            f"<b>Test radar 🧧</b>\n\n"
         )
         for chat_id in self.chat_ids:
             msg_id = self.kirim_tele(msg, chat_id)
