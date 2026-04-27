@@ -12,7 +12,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # konfigurasi default
 tele_token_default = "8682695455:AAEPyjoF9wioGM1_OhdbeawRdPCKZfUc4a8"
-chat_ids_default = "1871805510"
+chat_ids_default = "1871805510, 1631662935"
 interval_scan = 30  # interval pengecekan dalam detik
 
 base_url_telegram = "https://api.telegram.org" 
@@ -63,11 +63,13 @@ class RadarHongbao:
         self.tambah_log(f"gagal kirim telegram ke {chat_id} setelah {maks_percobaan} percobaan")
         return None
 
-    def hapus_tele(self, chat_id, message_id, maks_percobaan=2):
-        url = f"{base_url_telegram}/bot{self.token}/deleteMessage"
+    def edit_tele(self, chat_id, message_id, pesan_baru, maks_percobaan=2):
+        url = f"{base_url_telegram}/bot{self.token}/editMessageText"
         payload = {
             "chat_id": chat_id,
             "message_id": message_id,
+            "text": pesan_baru,
+            "parse_mode": "HTML",
         }
         
         for percobaan in range(maks_percobaan):
@@ -82,7 +84,7 @@ class RadarHongbao:
     def test_koneksi(self):
         self.tambah_log("mengirim pesan uji coba ke telegram...")
         msg = (
-            f"<b>Test radar 🧧</b>\n\n"
+            f"<b>Test Radar Hongbao</b>\n\n"
         )
         for chat_id in self.chat_ids:
             msg_id = self.kirim_tele(msg, chat_id)
@@ -119,14 +121,15 @@ class RadarHongbao:
                                 if env_name not in self.history_envelope:
                                     aman_nama = str(nama).replace("<", "&lt;").replace(">", "&gt;")
                                     aman_env = str(env_name).replace("<", "&lt;").replace(">", "&gt;")
+                                    waktu_sekarang = datetime.now().strftime('%H:%M:%S')
                                     
                                     msg = (
-                                        f"🧧 <b>hongbao baru rilis</b>\n\n"
-                                        f" <b>nama:</b> <code>{aman_nama}</code>\n"
-                                        f" <b>env:</b> <code>{aman_env}</code>\n"
-                                        f" <b>history id:</b> <code>{rid}</code>\n"
-                                        f" <b>views:</b> <code>{penonton} orang</code>\n"
-                                        f" <b>waktu:</b> <code>{datetime.now().strftime('%H:%M:%S')}</code>\n"
+                                        f"🧧 <b>Hongbao Baru Rilis</b>\n\n"
+                                        f" <b>Nama:</b> <code>{aman_nama}</code>\n"
+                                        f" <b>Env:</b> <code>{aman_env}</code>\n"
+                                        f" <b>History ID:</b> <code>{rid}</code>\n"
+                                        f" <b>Views:</b> <code>{penonton} orang</code>\n"
+                                        f" <b>Waktu:</b> <code>{waktu_sekarang}</code>\n"
                                     )
 
                                     self.tambah_log(f"menemukan hongbao baru: {env_name}")
@@ -137,18 +140,30 @@ class RadarHongbao:
                                         if msg_id:
                                             id_pesan_terkirim.append({"chat_id": chat_id, "message_id": msg_id})
 
-                                    self.pesan_aktif[env_name] = id_pesan_terkirim
+                                    self.pesan_aktif[env_name] = {
+                                        "pesan": id_pesan_terkirim,
+                                        "nama": aman_nama,
+                                        "waktu": waktu_sekarang
+                                    }
                                     self.history_envelope.append(env_name)
                                     
                                     if len(self.history_envelope) > 200:
                                         self.history_envelope.pop(0)
 
                     hongbao_kedaluwarsa = []
-                    for env_aktif, daftar_pesan in list(self.pesan_aktif.items()):
+                    for env_aktif, data_hongbao in list(self.pesan_aktif.items()):
                         if env_aktif not in hongbao_saat_ini:
-                            self.tambah_log(f"hongbao {env_aktif} selesai, menghapus pesan telegram")
-                            for p in daftar_pesan:
-                                self.hapus_tele(p["chat_id"], p["message_id"])
+                            self.tambah_log(f"hongbao {env_aktif} selesai, mengubah pesan telegram")
+                            
+                            msg_selesai = (
+                                f"<s>🧧 <b>Hongbao Selesai</b>\n\n"
+                                f" <b>Nama:</b> {data_hongbao['nama']}\n"
+                                f" <b>Env:</b> {env_aktif}\n"
+                                f" <b>Waktu:</b> {data_hongbao['waktu']}</s>"
+                            )
+                            
+                            for p in data_hongbao["pesan"]:
+                                self.edit_tele(p["chat_id"], p["message_id"], msg_selesai)
                             hongbao_kedaluwarsa.append(env_aktif)
 
                     for item in hongbao_kedaluwarsa:
