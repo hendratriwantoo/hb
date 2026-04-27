@@ -12,7 +12,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # konfigurasi default
 tele_token_default = "8682695455:AAEPyjoF9wioGM1_OhdbeawRdPCKZfUc4a8"
-chat_ids_default = "1871805510"
+chat_ids_default = "1871805510, 1631662935"
 interval_scan = 30  # interval pengecekan dalam detik
 
 base_url_telegram = "https://api.telegram.org" 
@@ -30,7 +30,8 @@ class RadarHongbao:
             "user-agent": "okhttp/4.11.0",
             "accept": "application/json",
         }
-        self.url_target = "https://newapi.goodnight.io/api/professions/hot_streamer_ranking?use_favor_languages=true&plan_id=3&exclude_pin_streamers=true&country_code=ID&token=2d769006-63ca-4646-8f18-72fa2ba0dffc&device_model=PJJ110&device_system_name=Android&device_system_version=9&app_version=1.339.0&build_number=628&locale=en-US&device_token=1c82ded23024ebd6&code_push_version=2"
+        # menggunakan url dan token baru dari user
+        self.url_target = "https://newapi.goodnight.io/api/professions/hot_streamer_ranking?use_favor_languages=true&plan_id=3&exclude_pin_streamers=true&country_code=ID&token=3850be5d-9b21-4358-9a74-4c2e83fad98d&device_model=SM-N976N&device_system_name=Android&device_system_version=9&app_version=1.339.0&build_number=628&locale=en-US&device_token=9f26fcb650475342&code_push_version=4"
 
     def tambah_log(self, teks):
         timestamp = datetime.now().strftime("%H:%M:%S")
