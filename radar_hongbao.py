@@ -12,7 +12,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # konfigurasi default
 tele_token_default = "8682695455:AAEPyjoF9wioGM1_OhdbeawRdPCKZfUc4a8"
-chat_ids_default = "1871805510, 1631662935"
+chat_ids_default = "1871805510"
 interval_scan = 30  # interval pengecekan dalam detik
 
 base_url_telegram = "https://api.telegram.org" 
