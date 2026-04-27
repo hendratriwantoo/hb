@@ -12,7 +12,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # konfigurasi default
 tele_token_default = "8682695455:AAEPyjoF9wioGM1_OhdbeawRdPCKZfUc4a8"
-chat_ids_default = "1871805510, 1631662935"
+chat_ids_default = "1871805510"
 interval_scan = 30  # interval pengecekan dalam detik
 
 base_url_telegram = "https://api.telegram.org" 
@@ -82,7 +82,7 @@ class RadarHongbao:
     def test_koneksi(self):
         self.tambah_log("mengirim pesan uji coba ke telegram...")
         msg = (
-            f"<b>test radar hongbao</b>\n\n"
+            f"<b>Test radar 🧧</b>\n\n"
         )
         for chat_id in self.chat_ids:
             msg_id = self.kirim_tele(msg, chat_id)
@@ -99,14 +99,9 @@ class RadarHongbao:
             try:
                 res = requests.get(self.url_target, headers=self.headers, timeout=15, verify=False)
                 
-                # menambahkan log detail untuk mengecek respon api
-                self.tambah_log(f"scan api - status code: {res.status_code}")
-                
                 if res.status_code == 200:
                     data = res.json()
                     users = data.get("users", data.get("data", {}).get("users", []))
-                    
-                    self.tambah_log(f"berhasil mendapat {len(users)} data streamer")
                     
                     hongbao_saat_ini = []
 
