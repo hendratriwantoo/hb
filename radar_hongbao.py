@@ -12,10 +12,9 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # konfigurasi default
 tele_token_default = "8682695455:AAEPyjoF9wioGM1_OhdbeawRdPCKZfUc4a8"
-chat_ids_default = "1871805510, 1631662935"
+chat_ids_default = "1871805510"
 interval_scan = 30  # interval pengecekan dalam detik
 
-# render umumnya tidak memblokir telegram, jadi bisa pakai url asli
 base_url_telegram = "https://api.telegram.org" 
 
 class RadarHongbao:
@@ -99,9 +98,14 @@ class RadarHongbao:
             try:
                 res = requests.get(self.url_target, headers=self.headers, timeout=15, verify=False)
                 
+                # menambahkan log detail untuk mengecek respon api
+                self.tambah_log(f"scan api - status code: {res.status_code}")
+                
                 if res.status_code == 200:
                     data = res.json()
                     users = data.get("users", data.get("data", {}).get("users", []))
+                    
+                    self.tambah_log(f"berhasil mendapat {len(users)} data streamer")
                     
                     hongbao_saat_ini = []
 
@@ -159,7 +163,7 @@ class RadarHongbao:
                     self.tambah_log("token api kedaluwarsa")
                     break
                 else:
-                    self.tambah_log(f"masalah server: {res.status_code}")
+                    self.tambah_log(f"masalah server: {res.status_code} - {res.text[:100]}")
 
             except Exception as e:
                 self.tambah_log(f"kesalahan sistem: {e}")
@@ -174,7 +178,6 @@ def jalankan_server_dummy():
         def log_message(self, format, *args):
             pass 
 
-    # menggunakan port dinamis dari environment variable render
     port = int(os.environ.get("PORT", 10000))
     try:
         with socketserver.TCPServer(("0.0.0.0", port), Handler) as httpd:
