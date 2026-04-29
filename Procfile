@@ -1,1 +1,1 @@
-worker: python radar_hongbao.py
+worker: python main.py
