@@ -5,17 +5,24 @@ import urllib3
 import threading
 import http.server
 import socketserver
-from datetime import datetime
+# Tambahkan timezone dan timedelta dari datetime
+from datetime import datetime, timezone, timedelta
 
 # menonaktifkan peringatan sertifikat untuk request ke api
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# konfigurasi default
-tele_token_default = "8682695455:AAEPyjoF9wioGM1_OhdbeawRdPCKZfUc4a8"
-chat_ids_default = "1871805510, 1631662935"
-interval_scan = 30  # interval pengecekan dalam detik
+# --- KONFIGURASI DARI VARIABLES (ENV) ---
+# Kode sekarang akan mencoba membaca dari panel "Variables" di hosting Anda (Railway/Render)
+# Jika tidak ditemukan di Variables, baru menggunakan nilai default di bawah ini.
+tele_token_env = os.environ.get("TELE_TOKEN", "8682695455:AAEPyjoF9wioGM1_OhdbeawRdPCKZfUc4a8")
+chat_ids_env = os.environ.get("CHAT_IDS", "1871805510, 1631662935")
+interval_scan = int(os.environ.get("INTERVAL_SCAN", 30))
 
 base_url_telegram = "https://api.telegram.org" 
+
+# --- PENGATURAN ZONA WAKTU ---
+# Mengatur zona waktu ke WIB (UTC+7). 
+TZ_WIB = timezone(timedelta(hours=7))
 
 class RadarHongbao:
     def __init__(self, token, chat_ids_str, interval):
@@ -23,6 +30,7 @@ class RadarHongbao:
         self.pesan_aktif = {}
         self.is_running = False
         self.token = token
+        # Memisahkan ID chat berdasarkan koma dan membersihkan spasi
         self.chat_ids = [cid.strip() for cid in chat_ids_str.split(",") if cid.strip()]
         self.interval = interval
         
@@ -34,7 +42,8 @@ class RadarHongbao:
         self.url_target = "https://newapi.goodnight.io/api/professions/hot_streamer_ranking?use_favor_languages=true&plan_id=3&exclude_pin_streamers=true&country_code=ID&token=3850be5d-9b21-4358-9a74-4c2e83fad98d&device_model=SM-N976N&device_system_name=Android&device_system_version=9&app_version=1.339.0&build_number=628&locale=en-US&device_token=9f26fcb650475342&code_push_version=4"
 
     def tambah_log(self, teks):
-        timestamp = datetime.now().strftime("%H:%M:%S")
+        # Menggunakan TZ_WIB agar log di server juga sesuai waktu Indonesia
+        timestamp = datetime.now(TZ_WIB).strftime("%H:%M:%S")
         print(f"[{timestamp}] {teks}", flush=True)
 
     def kirim_tele(self, pesan, chat_id, maks_percobaan=2):
@@ -81,8 +90,8 @@ class RadarHongbao:
         return False
 
     def test_koneksi(self):
-        self.tambah_log("Mengirim pesan uji coba ke Telegram...")
-        msg = "<b>Test Radar Hongbao</b>"
+        self.tambah_log(f"Mengirim pesan uji ke {len(self.chat_ids)} chat ID...")
+        msg = "<b>Test Radar Hongbao (Multi-ID Aktif)</b>"
         for chat_id in self.chat_ids:
             msg_id = self.kirim_tele(msg, chat_id)
             if msg_id:
@@ -92,7 +101,7 @@ class RadarHongbao:
 
     def mulai(self):
         self.is_running = True
-        self.tambah_log("Radar mulai memantau.")
+        self.tambah_log(f"Radar mulai memantau untuk {len(self.chat_ids)} chat ID.")
         
         while self.is_running:
             try:
@@ -118,7 +127,8 @@ class RadarHongbao:
                                 if env_name not in self.history_envelope:
                                     aman_nama = str(nama).replace("<", "&lt;").replace(">", "&gt;")
                                     aman_env = str(env_name).replace("<", "&lt;").replace(">", "&gt;")
-                                    waktu_sekarang = datetime.now().strftime('%H:%M:%S')
+                                    
+                                    waktu_sekarang = datetime.now(TZ_WIB).strftime('%H:%M:%S WIB')
                                     
                                     msg = (
                                         f"🧧 <b>Hongbao Baru Rilis</b>\n\n"
@@ -136,8 +146,6 @@ class RadarHongbao:
                                         msg_id = self.kirim_tele(msg, chat_id)
                                         if msg_id:
                                             id_pesan_terkirim.append({"chat_id": chat_id, "message_id": msg_id})
-                                        else:
-                                            self.tambah_log(f"Gagal mengirim notifikasi ke {chat_id}")
 
                                     if id_pesan_terkirim:
                                         self.pesan_aktif[env_name] = {
@@ -153,13 +161,13 @@ class RadarHongbao:
                     hongbao_kedaluwarsa = []
                     for env_aktif, data_hb in list(self.pesan_aktif.items()):
                         if env_aktif not in hongbao_saat_ini:
-                            self.tambah_log(f"Hongbao {env_aktif} selesai, mengubah format pesan")
+                            self.tambah_log(f"Hongbao {env_aktif} selesai, mengubah status pesan")
                             
                             msg_selesai = (
                                 f"<s>🧧 <b>Hongbao Selesai</b>\n\n"
                                 f" <b>Nama:</b> {data_hb['nama']}\n"
                                 f" <b>Env:</b> {env_aktif}\n"
-                                f" <b>Waktu:</b> {data_hb['waktu']}</s>"
+                                f" <b>Waktu Rilis:</b> {data_hb['waktu']}</s>"
                             )
                             
                             for p in data_hb["pesan"]:
@@ -171,8 +179,7 @@ class RadarHongbao:
                             del self.pesan_aktif[item]
 
                 elif res.status_code == 401:
-                    self.tambah_log("Token API Goodnight kedaluwarsa, silakan ganti token baru")
-                    # opsional: kirim notifikasi ke telegram bahwa token mati
+                    self.tambah_log("Token API Goodnight kedaluwarsa, silakan perbarui token")
                     break
 
             except Exception as e:
@@ -188,14 +195,15 @@ def jalankan_server_dummy():
     port = int(os.environ.get("PORT", 10000))
     try:
         with socketserver.TCPServer(("0.0.0.0", port), Handler) as httpd:
-            print(f"Server port {port} aktif untuk health check render", flush=True)
+            print(f"Server health check aktif di port {port}", flush=True)
             httpd.serve_forever()
     except Exception as e:
         print(f"Gagal memulai server dummy: {e}", flush=True)
 
 if __name__ == "__main__":
     threading.Thread(target=jalankan_server_dummy, daemon=True).start()
-    radar = RadarHongbao(tele_token_default, chat_ids_default, interval_scan)
+    # Menggunakan variabel yang diambil dari Environment atau Default
+    radar = RadarHongbao(tele_token_env, chat_ids_env, interval_scan)
     radar.test_koneksi()
     
     try:
