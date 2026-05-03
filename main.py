@@ -177,6 +177,9 @@ class RadarHongbao:
                     for item in hongbao_kedaluwarsa:
                         if item in self.pesan_aktif:
                             del self.pesan_aktif[item]
+                        # perbaikan ditambahkan di sini: menghapus nama dari history jika sudah selesai
+                        if item in self.history_envelope:
+                            self.history_envelope.remove(item)
 
                 elif res.status_code == 401:
                     self.tambah_log("Token API Goodnight kedaluwarsa, silakan perbarui token")
